@@ -14,12 +14,14 @@ import {
 } from "antd";
 import { SearchOutlined, UserOutlined, TagOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../api";
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 
 export default function MainPage() {
+  const { t, i18n } = useTranslation();
   const [latestInventories, setLatestInventories] = useState([]);
   const [popularInventories, setPopularInventories] = useState([]);
   const [tags, setTags] = useState([]);
@@ -67,16 +69,16 @@ export default function MainPage() {
         }}
       >
         <Spin size="large" />
-        <Text style={{ marginLeft: "16px" }}>Loading</Text>
+        <Text style={{ marginLeft: "16px" }}>{t("loading")}</Text>
       </Space>
     );
   }
 
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Card title="Latest Inventories">
+      <Card title={t("latestInventories")}>
         {latestInventories.length === 0 ? (
-          <Text type="secondary">No public inventories yet.</Text>
+          <Text type="secondary">{t("noPublicInventories")}</Text>
         ) : (
           <Row gutter={[16, 16]}>
             {latestInventories.map((inv) => (
@@ -129,9 +131,9 @@ export default function MainPage() {
         )}
       </Card>
 
-      <Card title="Most Popular Inventories">
+      <Card title={t("popularInventories")}>
         {popularInventories.length === 0 ? (
-          <Text type="secondary">No popular inventories yet.</Text>
+          <Text type="secondary">{t("noPopularInventories")}</Text>
         ) : (
           <Row gutter={[16, 16]}>
             {popularInventories.map((inv) => (
@@ -184,9 +186,9 @@ export default function MainPage() {
         )}
       </Card>
 
-      <Card title="Popular Tags">
+      <Card title={t("popularTags")}>
         {tags.length === 0 ? (
-          <Text type="secondary">No tags yet.</Text>
+          <Text type="secondary">{t("noTags")}</Text>
         ) : (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {tags.slice(0, 20).map((tag) => (

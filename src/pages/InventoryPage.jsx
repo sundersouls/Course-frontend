@@ -27,12 +27,14 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../api";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function InventoryPage() {
+  const { t, i18n } = useTranslation();
   const [myInventories, setMyInventories] = useState([]);
   const [accessibleInventories, setAccessibleInventories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,51 +236,40 @@ export default function InventoryPage() {
 
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Space
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Title level={2} style={{ margin: 0 }}>
-          My Inventories
-        </Title>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => navigate("/inventories/create")}
-          size="large"
-        >
-          Create Inventory
-        </Button>
-      </Space>
-
       <Card
-        title="My Inventories"
+        title={t("myInventories")}
         className="hover-table"
         extra={
-          <Popconfirm
-            title="Delete selected"
-            description="Delete all selected inventories? This cannot be undone."
-            onConfirm={handleMassDelete}
-            okText="Delete"
-            okButtonProps={{ danger: true }}
-            cancelText="Cancel"
-          >
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              disabled={selectedRowKeys.length === 0}
+          <Space>
+            <Popconfirm
+              title={t("deleteSelected")}
+              description={t("deleteDesc")}
+              onConfirm={handleMassDelete}
+              okText={t("deleteText")}
+              okButtonProps={{ danger: true }}
+              cancelText={t("cancelText")}
             >
-              Delete Selected
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                disabled={selectedRowKeys.length === 0}
+              >
+                {t("deleteSelected")}
+              </Button>
+            </Popconfirm>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate("/inventories/create", { state: { createMode: true } })}
+            >
+              {t("createInventory")}
             </Button>
-          </Popconfirm>
+          </Space>
         }
       >
         {myInventories.length === 0 ? (
           <Empty
-            description="No inventories found. Create your first inventory!"
+            description={t("noInventories")}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           ></Empty>
         ) : (

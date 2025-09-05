@@ -206,20 +206,8 @@ export default function AdminPage() {
 
   return (
     <Space direction="vertical" size="large" style={{ width: "100%" }}>
-      <Space
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Title level={2} style={{ margin: 0 }}>
-          User list
-        </Title>
-      </Space>
-
       <Card
-        title="Actions"
+        title="User list"
         className="hover-table"
         extra={
           <Space>

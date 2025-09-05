@@ -57,10 +57,8 @@ export default function RegistrationCompletePage() {
   const t = translations[language];
 
   useEffect(() => {
-    // Apply theme to body
     document.body.className = theme === "dark" ? "dark-theme" : "light-theme";
 
-    // Fetch user data to confirm registration
     const fetchUser = async () => {
       try {
         const response = await fetch("http://localhost:8000/api/auth/me", {
@@ -71,11 +69,9 @@ export default function RegistrationCompletePage() {
           const userData = await response.json();
           if (userData && userData.id) {
             setUser(userData);
-            // Animate steps
             setTimeout(() => setCurrentStep(1), 500);
             setTimeout(() => setCurrentStep(2), 1000);
           } else {
-            // No user found, redirect to login
             navigate("/login");
           }
         } else {

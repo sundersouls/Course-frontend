@@ -32,6 +32,10 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMe, setToken } from "../store/authSlice";
 import { debounce } from "lodash";
+import { useTranslation } from "react-i18next";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { showToast, handleApiError } from "../components/toast.js";
 
 const { Header, Content, Sider } = Layout;
 const { Text, Title } = Typography;
@@ -39,6 +43,7 @@ const { Text, Title } = Typography;
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function MainLayout() {
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
   const loading = useSelector((state) => state.auth.loading);
@@ -50,50 +55,6 @@ export default function MainLayout() {
   const [searchLoading, setSearchLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const translations = useMemo(
-    () => ({
-      en: {
-        appName: "Inventory Manager",
-        home: "Home",
-        inventories: "Inventories",
-        myInventories: "My Inventories",
-        createInventory: "Create Inventory",
-        profile: "My Profile",
-        settings: "Settings",
-        darkTheme: "Dark Theme",
-        language: "Language",
-        adminPanel: "Admin Panel",
-        login: "Login",
-        logout: "Logout",
-        search: "Search inventories and items...",
-        loading: "Loading...",
-        loginRequired: "Please login to access this feature",
-        searchError: "Search failed. Please try again.",
-      },
-      es: {
-        appName: "Gestor de Inventarios",
-        home: "Inicio",
-        inventories: "Inventarios",
-        myInventories: "Mis Inventarios",
-        createInventory: "Crear Inventario",
-        profile: "Mi Perfil",
-        settings: "Configuración",
-        darkTheme: "Tema Oscuro",
-        language: "Idioma",
-        adminPanel: "Panel de Admin",
-        login: "Iniciar Sesión",
-        logout: "Cerrar Sesión",
-        search: "Buscar inventarios y elementos...",
-        loading: "Cargando...",
-        loginRequired: "Inicia sesión para acceder a esta función",
-        searchError: "Búsqueda falló. Inténtalo de nuevo.",
-      },
-    }),
-    [],
-  );
-
-  const t = translations[language];
 
   const debouncedFetchSuggestions = useCallback(
     debounce(async (query) => {
@@ -175,13 +136,29 @@ export default function MainLayout() {
     setTheme(savedTheme);
     setLanguage(savedLanguage);
 
+    if (savedLanguage !== i18n.language) {
+      i18n.changeLanguage(savedLanguage);
+    }
+
     document.body.className =
       savedTheme === "dark" ? "dark-theme" : "light-theme";
-  }, [dispatch]);
+  }, [dispatch, i18n]);
 
   useEffect(() => {
     debouncedFetchSuggestions(searchValue);
   }, [searchValue, debouncedFetchSuggestions]);
+
+  useEffect(() => {
+    const handleLanguageChange = (lng) => {
+      setLanguage(lng);
+    };
+
+    i18n.on("languageChanged", handleLanguageChange);
+
+    return () => {
+      i18n.off("languageChanged", handleLanguageChange);
+    };
+  }, [i18n]);
 
   const handleLogout = () => {
     window.location.href = `${API_URL}/api/auth/logout`;
@@ -199,9 +176,15 @@ export default function MainLayout() {
       newTheme === "dark" ? "dark-theme" : "light-theme";
   };
 
-  const handleLanguageChange = (lang) => {
-    setLanguage(lang);
-    localStorage.setItem("language", lang);
+  const handleLanguageChange = async (lang) => {
+    try {
+      setLanguage(lang);
+      localStorage.setItem("language", lang);
+      await i18n.changeLanguage(lang);
+    } catch (error) {
+      console.error("Failed to change language:", error);
+      message.error("Failed to change language");
+    }
   };
 
   const handleSearch = async (value) => {
@@ -214,7 +197,7 @@ export default function MainLayout() {
       navigate(`/search?q=${encodeURIComponent(value.trim())}`);
     } catch (error) {
       console.error("Search navigation error:", error);
-      message.error(t.searchError);
+      message.error(t("searchError") || "Search error");
     }
   };
 
@@ -228,19 +211,19 @@ export default function MainLayout() {
         {
           key: "profile",
           icon: <UserOutlined />,
-          label: <Link to="/profile">{t.profile}</Link>,
+          label: <Link to="/profile">{t("profile")}</Link>,
         },
         {
           key: "settings",
           icon: <SettingOutlined />,
-          label: t.settings,
+          label: t("settings"),
           children: [
             {
               key: "theme",
               label: (
                 <Space>
                   <BulbOutlined />
-                  <Text>{t.darkTheme}</Text>
+                  <Text>{t("darkTheme")}</Text>
                   <Switch
                     size="small"
                     checked={theme === "dark"}
@@ -252,17 +235,43 @@ export default function MainLayout() {
             {
               key: "language",
               icon: <GlobalOutlined />,
-              label: t.language,
+              label: t("language"),
               children: [
                 {
                   key: "en",
-                  label: "English",
+                  label: (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      English
+                      {language === "en" && (
+                        <span style={{ color: "#1890ff" }}>✓</span>
+                      )}
+                    </div>
+                  ),
                   onClick: () => handleLanguageChange("en"),
                 },
                 {
-                  key: "es",
-                  label: "Español",
-                  onClick: () => handleLanguageChange("es"),
+                  key: "ru",
+                  label: (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      Русский
+                      {language === "ru" && (
+                        <span style={{ color: "#1890ff" }}>✓</span>
+                      )}
+                    </div>
+                  ),
+                  onClick: () => handleLanguageChange("ru"),
                 },
               ],
             },
@@ -274,7 +283,7 @@ export default function MainLayout() {
         {
           key: "logout",
           icon: <LogoutOutlined />,
-          label: t.logout,
+          label: t("logout"),
           onClick: handleLogout,
         },
       ]
@@ -286,7 +295,7 @@ export default function MainLayout() {
       label: (
         <Space>
           <BulbOutlined />
-          <Text>{t.darkTheme}</Text>
+          <Text>{t("darkTheme")}</Text>
           <Switch
             size="small"
             checked={theme === "dark"}
@@ -298,17 +307,39 @@ export default function MainLayout() {
     {
       key: "language",
       icon: <GlobalOutlined />,
-      label: t.language,
+      label: t("language"),
       children: [
         {
           key: "en",
-          label: "English",
+          label: (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              English
+              {language === "en" && <span style={{ color: "#1890ff" }}>✓</span>}
+            </div>
+          ),
           onClick: () => handleLanguageChange("en"),
         },
         {
-          key: "es",
-          label: "Español",
-          onClick: () => handleLanguageChange("es"),
+          key: "ru",
+          label: (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              Русский
+              {language === "ru" && <span style={{ color: "#1890ff" }}>✓</span>}
+            </div>
+          ),
+          onClick: () => handleLanguageChange("ru"),
         },
       ],
     },
@@ -318,19 +349,19 @@ export default function MainLayout() {
     {
       key: "home",
       icon: <HomeOutlined />,
-      label: <Link to="/">{t.home}</Link>,
+      label: <Link to="/">{t("home")}</Link>,
     },
     {
       key: "inventories",
       icon: <AppstoreOutlined />,
-      label: <Link to="/inventories">{t.myInventories}</Link>,
+      label: <Link to="/inventories">{t("myInventories")}</Link>,
     },
     ...(user?.isAdmin
       ? [
           {
             key: "admin",
             icon: <SettingOutlined />,
-            label: <Link to="/admin">{t.adminPanel}</Link>,
+            label: <Link to="/admin">{t("adminPanel")}</Link>,
           },
         ]
       : []),
@@ -347,7 +378,7 @@ export default function MainLayout() {
         }}
       >
         <Spin size="large" />
-        <Text style={{ marginLeft: 16 }}>{t.loading}</Text>
+        <Text style={{ marginLeft: 16 }}>{t("loading")}</Text>
       </div>
     );
   }
@@ -374,7 +405,7 @@ export default function MainLayout() {
                 color: theme === "dark" ? "#fff" : "#1890ff",
               }}
             >
-              {t.appName}
+              {t("appName")}
             </Title>
           </Link>
         </div>
@@ -393,7 +424,7 @@ export default function MainLayout() {
             options={searchSuggestions}
             onSearch={setSearchValue}
             onSelect={handleSearchSelect}
-            placeholder={t.search}
+            placeholder={t("search")}
             allowClear
             style={{ maxWidth: 400, width: "100%" }}
             notFoundContent={searchLoading ? <Spin size="small" /> : null}
@@ -466,7 +497,7 @@ export default function MainLayout() {
                 icon={<LoginOutlined />}
                 onClick={handleLogin}
               >
-                {t.login}
+                {t("login")}
               </Button>
             </Space>
           )}
